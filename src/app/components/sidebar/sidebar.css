@@ -14,12 +14,30 @@
 .sidebar-header {
   padding: 1rem;
   border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .sidebar-header h2 {
   margin: 0;
   font-size: 1.125rem;
   color: #333;
+}
+
+.btn-text {
+  padding: 0.25rem 0.5rem;
+  background: transparent;
+  border: none;
+  color: #2563eb;
+  font-size: 0.875rem;
+  cursor: pointer;
+  border-radius: 0.25rem;
+  transition: background-color 0.15s;
+}
+
+.btn-text:hover {
+  background-color: #eff6ff;
 }
 
 .sidebar-content {

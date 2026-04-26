@@ -40,4 +40,10 @@ export class SidebarComponent {
   stopSpeaking(): void {
     this.ttsService.stop();
   }
+
+  clearSelection(): void {
+    this.selectionService.clear();
+    this.translationService.clear();
+    this.ttsService.stop();
+  }
 }

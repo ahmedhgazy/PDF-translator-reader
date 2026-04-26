@@ -1,6 +1,15 @@
 <aside class="sidebar-container">
   <header class="sidebar-header">
     <h2>Translation Panel</h2>
+    @if (selectionService.selectedText()) {
+      <button
+        class="btn-text"
+        (click)="clearSelection()"
+        [attr.aria-label]="'Clear selection'"
+      >
+        Clear
+      </button>
+    }
   </header>
 
   <div class="sidebar-content">
