@@ -2,7 +2,43 @@
   <header class="sidebar-header">
     <h2>Translation Panel</h2>
   </header>
+
   <div class="sidebar-content">
-    <p>Select text from the PDF to translate.</p>
+    <section class="section">
+      <h3 class="section-title">Selected Text</h3>
+      <div class="text-box">
+        @if (selectionService.selectedText()) {
+          {{ selectionService.selectedText() }}
+        } @else {
+          <span class="placeholder">Select text from the PDF to translate.</span>
+        }
+      </div>
+      <button
+        class="btn-primary"
+        (click)="onTranslate()"
+        [disabled]="!selectionService.selectedText() || translationService.isLoading()"
+      >
+        @if (translationService.isLoading()) {
+          Translating...
+        } @else {
+          Translate
+        }
+      </button>
+    </section>
+
+    @if (translationService.translatedText()) {
+      <section class="section">
+        <h3 class="section-title">Translation</h3>
+        <div class="text-box translation-result">
+          {{ translationService.translatedText() }}
+        </div>
+      </section>
+    }
+
+    @if (translationService.errorMessage()) {
+      <div class="error-message" role="alert">
+        {{ translationService.errorMessage() }}
+      </div>
+    }
   </div>
 </aside>

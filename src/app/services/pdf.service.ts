@@ -66,6 +66,7 @@ export class PdfService {
     canvas.height = viewport.height;
 
     await page.render({
+       canvas: canvas,     
       canvasContext: context,
       viewport
     }).promise;
