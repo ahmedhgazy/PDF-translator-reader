@@ -33,6 +33,8 @@ Translation is powered by the [MyMemory API](https://mymemory.translated.net/), 
 5. Copy the translation with the copy button in the popup
 6. The sidebar on the right keeps a persistent view of the same info
 
+> **Tip:** Double-click a word or sentence to select it quickly — much easier than click-and-drag on PDF text.
+
 ## Project structure
 
 ```
