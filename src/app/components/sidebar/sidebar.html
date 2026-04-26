@@ -5,7 +5,19 @@
 
   <div class="sidebar-content">
     <section class="section">
-      <h3 class="section-title">Selected Text</h3>
+      <div class="section-header">
+        <h3 class="section-title">Selected Text</h3>
+        @if (ttsService.isSupported() && selectionService.selectedText()) {
+          <button
+            class="btn-icon"
+            (click)="speakSelected()"
+            [attr.aria-label]="'Speak selected text'"
+            title="Speak selected text"
+          >
+            🔊
+          </button>
+        }
+      </div>
       <div class="text-box">
         @if (selectionService.selectedText()) {
           {{ selectionService.selectedText() }}
@@ -13,22 +25,39 @@
           <span class="placeholder">Select text from the PDF to translate.</span>
         }
       </div>
-      <button
-        class="btn-primary"
-        (click)="onTranslate()"
-        [disabled]="!selectionService.selectedText() || translationService.isLoading()"
-      >
-        @if (translationService.isLoading()) {
-          Translating...
-        } @else {
-          Translate
+      <div class="actions-row">
+        <button
+          class="btn-primary"
+          (click)="onTranslate()"
+          [disabled]="!selectionService.selectedText() || translationService.isLoading()"
+        >
+          @if (translationService.isLoading()) {
+            Translating...
+          } @else {
+            Translate
+          }
+        </button>
+        @if (ttsService.isSpeaking()) {
+          <button class="btn-secondary" (click)="stopSpeaking()">Stop</button>
         }
-      </button>
+      </div>
     </section>
 
     @if (translationService.translatedText()) {
       <section class="section">
-        <h3 class="section-title">Translation</h3>
+        <div class="section-header">
+          <h3 class="section-title">Translation</h3>
+          @if (ttsService.isSupported()) {
+            <button
+              class="btn-icon"
+              (click)="speakTranslated()"
+              [attr.aria-label]="'Speak translation'"
+              title="Speak translation"
+            >
+              🔊
+            </button>
+          }
+        </div>
         <div class="text-box translation-result">
           {{ translationService.translatedText() }}
         </div>
