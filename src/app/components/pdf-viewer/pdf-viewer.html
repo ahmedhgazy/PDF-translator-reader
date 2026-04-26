@@ -1,5 +1,49 @@
 <div class="pdf-viewer-container">
-  <div class="pdf-placeholder">
-    <p>PDF viewer will be integrated here.</p>
-  </div>
+  @if (!pdfServiceRef.isLoaded()) {
+    <div class="upload-area">
+      <label class="upload-label" for="pdf-upload">Choose a PDF file</label>
+      <input
+        id="pdf-upload"
+        type="file"
+        accept=".pdf"
+        (change)="onFileSelected($event)"
+        class="upload-input"
+      />
+    </div>
+  }
+
+  @if (pdfServiceRef.isLoaded()) {
+    <div class="toolbar">
+      <button
+        class="toolbar-btn"
+        (click)="pdfServiceRef.previousPage()"
+        [disabled]="pdfServiceRef.currentPage() === 1"
+      >
+        Previous
+      </button>
+      <span class="page-info">
+        Page {{ pdfServiceRef.currentPage() }} of {{ pdfServiceRef.totalPages() }}
+      </span>
+      <button
+        class="toolbar-btn"
+        (click)="pdfServiceRef.nextPage()"
+        [disabled]="pdfServiceRef.currentPage() === pdfServiceRef.totalPages()"
+      >
+        Next
+      </button>
+      <div class="toolbar-spacer"></div>
+      <button class="toolbar-btn" (click)="pdfServiceRef.zoomOut()">-</button>
+      <span class="zoom-info">{{ pdfServiceRef.scale() | number: '1.2-2' }}x</span>
+      <button class="toolbar-btn" (click)="pdfServiceRef.zoomIn()">+</button>
+    </div>
+    <div class="canvas-wrapper">
+      <canvas #pdfCanvas></canvas>
+    </div>
+  }
+
+  @if (pdfServiceRef.errorMessage()) {
+    <div class="error-banner" role="alert">
+      {{ pdfServiceRef.errorMessage() }}
+    </div>
+  }
 </div>
