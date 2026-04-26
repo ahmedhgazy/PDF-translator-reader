@@ -1,6 +1,6 @@
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { SelectionService } from '../../services/selection.service';
-import { TranslationService } from '../../services/translation.service';
+import { TranslationService, SUPPORTED_LANGUAGES } from '../../services/translation.service';
 import { TextToSpeechService } from '../../services/text-to-speech.service';
 
 @Component({
@@ -13,6 +13,7 @@ export class SidebarComponent {
   readonly selectionService = inject(SelectionService);
   readonly translationService = inject(TranslationService);
   readonly ttsService = inject(TextToSpeechService);
+  readonly languages = SUPPORTED_LANGUAGES;
 
   async onTranslate(): Promise<void> {
     const text = this.selectionService.selectedText();
@@ -21,6 +22,11 @@ export class SidebarComponent {
     }
 
     await this.translationService.translate({ text });
+  }
+
+  onLanguageChange(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    this.translationService.targetLanguage.set(select.value);
   }
 
   speakSelected(): void {

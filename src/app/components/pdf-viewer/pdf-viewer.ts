@@ -22,6 +22,7 @@ export class PdfViewerComponent {
   private readonly selectionService = inject(SelectionService);
   readonly canvasRef = viewChild<ElementRef<HTMLCanvasElement>>('pdfCanvas');
   readonly textLayerRef = viewChild<ElementRef<HTMLDivElement>>('textLayer');
+  private selectionTimeout: ReturnType<typeof setTimeout> | null = null;
 
   get pdfServiceRef(): PdfService {
     return this.pdfService;
@@ -65,9 +66,15 @@ export class PdfViewerComponent {
   }
 
   onTextLayerMouseUp(): void {
-    const selection = window.getSelection()?.toString().trim() ?? '';
-    if (selection.length > 0) {
-      this.selectionService.setSelectedText(selection);
+    if (this.selectionTimeout) {
+      clearTimeout(this.selectionTimeout);
     }
+
+    this.selectionTimeout = setTimeout(() => {
+      const selection = window.getSelection()?.toString().trim() ?? '';
+      if (selection.length > 0) {
+        this.selectionService.setSelectedText(selection);
+      }
+    }, 300);
   }
 }
