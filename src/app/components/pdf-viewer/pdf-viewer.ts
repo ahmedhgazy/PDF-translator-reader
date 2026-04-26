@@ -8,6 +8,7 @@ import {
   inject
 } from '@angular/core';
 import { PdfService } from '../../services/pdf.service';
+import { SelectionService } from '../../services/selection.service';
 
 @Component({
   selector: 'app-pdf-viewer',
@@ -18,7 +19,9 @@ import { PdfService } from '../../services/pdf.service';
 })
 export class PdfViewerComponent {
   private readonly pdfService = inject(PdfService);
+  private readonly selectionService = inject(SelectionService);
   readonly canvasRef = viewChild<ElementRef<HTMLCanvasElement>>('pdfCanvas');
+  readonly textLayerRef = viewChild<ElementRef<HTMLDivElement>>('textLayer');
 
   get pdfServiceRef(): PdfService {
     return this.pdfService;
@@ -30,15 +33,25 @@ export class PdfViewerComponent {
       const scale = this.pdfService.scale();
       const loaded = this.pdfService.isLoaded();
       const canvasEl = this.canvasRef();
+      const textLayerEl = this.textLayerRef();
 
-      if (!loaded || !canvasEl) {
+      if (!loaded || !canvasEl || !textLayerEl) {
         return;
       }
+
+      const canvas = canvasEl.nativeElement;
+      const textLayer = textLayerEl.nativeElement;
 
       this.pdfService.renderPage({
         pageNumber: page,
         scale,
-        canvas: canvasEl.nativeElement
+        canvas
+      }).then(() => {
+        this.pdfService.renderTextLayer({
+          pageNumber: page,
+          scale,
+          container: textLayer
+        });
       });
     });
   }
@@ -48,6 +61,13 @@ export class PdfViewerComponent {
     const file = input.files?.[0];
     if (file) {
       this.pdfService.loadDocument(file);
+    }
+  }
+
+  onTextLayerMouseUp(): void {
+    const selection = window.getSelection()?.toString().trim() ?? '';
+    if (selection.length > 0) {
+      this.selectionService.setSelectedText(selection);
     }
   }
 }

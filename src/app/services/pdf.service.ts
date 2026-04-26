@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import * as pdfjsLib from 'pdfjs-dist';
+import { TextLayer } from 'pdfjs-dist';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.mjs';
@@ -8,6 +9,12 @@ export interface RenderOptions {
   pageNumber: number;
   scale: number;
   canvas: HTMLCanvasElement;
+}
+
+export interface TextLayerOptions {
+  pageNumber: number;
+  scale: number;
+  container: HTMLElement;
 }
 
 @Injectable({
@@ -63,6 +70,29 @@ export class PdfService {
       viewport
     }).promise;
 
+    page.cleanup();
+  }
+
+  async renderTextLayer(options: TextLayerOptions): Promise<void> {
+    if (!this.pdfDocument) {
+      return;
+    }
+
+    const page = await this.pdfDocument.getPage(options.pageNumber);
+    const viewport = page.getViewport({ scale: options.scale });
+    const textContent = await page.getTextContent();
+
+    options.container.innerHTML = '';
+    options.container.style.width = `${viewport.width}px`;
+    options.container.style.height = `${viewport.height}px`;
+
+    const textLayer = new TextLayer({
+      textContentSource: textContent,
+      container: options.container,
+      viewport
+    });
+
+    await textLayer.render();
     page.cleanup();
   }
 

@@ -37,7 +37,14 @@
       <button class="toolbar-btn" (click)="pdfServiceRef.zoomIn()">+</button>
     </div>
     <div class="canvas-wrapper">
-      <canvas #pdfCanvas></canvas>
+      <div class="page-container">
+        <canvas #pdfCanvas></canvas>
+        <div
+          #textLayer
+          class="text-layer"
+          (mouseup)="onTextLayerMouseUp()"
+        ></div>
+      </div>
     </div>
   }
 
