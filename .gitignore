@@ -28,6 +28,16 @@ yarn-error.log
 !.vscode/extensions.json
 .history/*
 
+# AI assistants
+.windsurf/
+.cursor/
+.copilot/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
 # Miscellaneous
 /.angular/cache
 .sass-cache/
@@ -37,7 +47,10 @@ yarn-error.log
 testem.log
 /typings
 __screenshots__/
+*.log
 
 # System files
 .DS_Store
 Thumbs.db
+Desktop.ini
+ehthumbs.db

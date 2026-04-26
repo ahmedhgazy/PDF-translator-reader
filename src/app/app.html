@@ -1,12 +1,57 @@
 <header class="app-header">
-  <h1 class="app-title">PDF Translator Reader</h1>
-  <span class="app-subtitle">Select text from any PDF to translate and listen</span>
+  <div class="header-left">
+    <div class="logo-icon" aria-hidden="true">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="3" width="18" height="22" rx="2" stroke="url(#logoGrad)" stroke-width="2"/>
+        <path d="M7 9h8M7 13h6M7 17h8" stroke="url(#logoGrad)" stroke-width="1.5" stroke-linecap="round"/>
+        <circle cx="21" cy="21" r="6" fill="url(#logoGrad)"/>
+        <path d="M19 21h4M21 19v4" stroke="#0a0a1a" stroke-width="1.5" stroke-linecap="round"/>
+        <defs>
+          <linearGradient id="logoGrad" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#667eea"/>
+            <stop offset="1" stop-color="#764ba2"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+    <div class="header-text">
+      <h1 class="app-title">PDF Translator</h1>
+      <span class="app-subtitle">Read · Translate · Listen</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="header-badge">EN ↔ AR</span>
+    <button
+      class="sidebar-toggle"
+      (click)="toggleSidebar()"
+      [attr.aria-expanded]="sidebarOpen()"
+      aria-label="Toggle translation panel"
+      title="Toggle translation panel"
+    >
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+        @if (sidebarOpen()) {
+          <path d="M14 3H4a1 1 0 00-1 1v10a1 1 0 001 1h10a1 1 0 001-1V4a1 1 0 00-1-1z" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M11 3v12" stroke="currentColor" stroke-width="1.4"/>
+        } @else {
+          <path d="M14 3H4a1 1 0 00-1 1v10a1 1 0 001 1h10a1 1 0 001-1V4a1 1 0 00-1-1z" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M11 3v12M8 7l3 2-3 2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        }
+      </svg>
+    </button>
+  </div>
 </header>
-<div class="app-layout">
+
+<div class="app-layout" [class.sidebar-collapsed]="!sidebarOpen()">
   <main class="viewer-pane">
     <app-pdf-viewer />
   </main>
-  <aside class="sidebar-pane">
+  <aside class="sidebar-pane" [class.sidebar-pane--open]="sidebarOpen()">
     <app-sidebar />
   </aside>
 </div>
+
+<footer class="app-footer">
+  <span>Built with ❤️ by Ahmed Mohamed</span>
+</footer>
+
+<app-translation-popup />

@@ -10,9 +10,9 @@ import { TextToSpeechService } from '../../services/text-to-speech.service';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SidebarComponent {
-  readonly selectionService = inject(SelectionService);
-  readonly translationService = inject(TranslationService);
-  readonly ttsService = inject(TextToSpeechService);
+  protected readonly selectionService = inject(SelectionService);
+  protected readonly translationService = inject(TranslationService);
+  protected readonly ttsService = inject(TextToSpeechService);
   readonly languages = SUPPORTED_LANGUAGES;
 
   async onTranslate(): Promise<void> {
@@ -24,22 +24,33 @@ export class SidebarComponent {
     await this.translationService.translate({ text });
   }
 
-  onLanguageChange(event: Event): void {
+  onSourceLanguageChange(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    this.translationService.sourceLanguage.set(select.value);
+  }
+
+  onTargetLanguageChange(event: Event): void {
     const select = event.target as HTMLSelectElement;
     this.translationService.targetLanguage.set(select.value);
+  }
+
+  onSwapLanguages(): void {
+    this.translationService.swapLanguages();
   }
 
   speakSelected(): void {
     const text = this.selectionService.selectedText();
     if (text) {
-      this.ttsService.speak(text, 'auto');
+      const lang = this.translationService.sourceLanguage();
+      this.ttsService.speak(text, lang);
     }
   }
 
   speakTranslated(): void {
     const text = this.translationService.translatedText();
     if (text) {
-      this.ttsService.speak(text);
+      const lang = this.translationService.targetLanguage();
+      this.ttsService.speak(text, lang);
     }
   }
 
@@ -51,5 +62,12 @@ export class SidebarComponent {
     this.selectionService.clear();
     this.translationService.clear();
     this.ttsService.stop();
+  }
+
+  copyTranslation(): void {
+    const text = this.translationService.translatedText();
+    if (text) {
+      navigator.clipboard.writeText(text);
+    }
   }
 }

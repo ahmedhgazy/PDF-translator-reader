@@ -1,56 +1,162 @@
 <div class="pdf-viewer-container">
-  @if (!pdfServiceRef.isLoaded()) {
-    <div class="upload-area">
-      <label class="upload-label" for="pdf-upload">Choose a PDF file</label>
-      <input
-        id="pdf-upload"
-        type="file"
-        accept=".pdf"
-        (change)="onFileSelected($event)"
-        class="upload-input"
-      />
-    </div>
-  }
-
-  @if (pdfServiceRef.isLoaded()) {
-    <div class="toolbar">
-      <button
-        class="toolbar-btn"
-        (click)="pdfServiceRef.previousPage()"
-        [disabled]="pdfServiceRef.currentPage() === 1"
-      >
-        Previous
-      </button>
-      <span class="page-info">
-        Page {{ pdfServiceRef.currentPage() }} of {{ pdfServiceRef.totalPages() }}
-      </span>
-      <button
-        class="toolbar-btn"
-        (click)="pdfServiceRef.nextPage()"
-        [disabled]="pdfServiceRef.currentPage() === pdfServiceRef.totalPages()"
-      >
-        Next
-      </button>
-      <div class="toolbar-spacer"></div>
-      <button class="toolbar-btn" (click)="pdfServiceRef.zoomOut()">-</button>
-      <span class="zoom-info">{{ pdfServiceRef.scale() | number: '1.2-2' }}x</span>
-      <button class="toolbar-btn" (click)="pdfServiceRef.zoomIn()">+</button>
-    </div>
-    <div class="canvas-wrapper">
-      <div class="page-container">
-        <canvas #pdfCanvas></canvas>
-        <div
-          #textLayer
-          class="text-layer"
-          (mouseup)="onTextLayerMouseUp()"
-        ></div>
+  @if (!pdfService.isLoaded()) {
+    <div
+      class="upload-area"
+      [class.dragging]="isDragging()"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave($event)"
+      (drop)="onDrop($event)"
+    >
+      <div class="upload-content">
+        <div class="upload-icon" aria-hidden="true">
+          <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="8" y="6" width="32" height="40" rx="3" stroke="currentColor" stroke-width="2" stroke-dasharray="4 3"/>
+            <path d="M15 22h18M15 28h14M15 34h18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+            <circle cx="40" cy="40" r="12" fill="url(#uploadGrad)" opacity="0.9"/>
+            <path d="M40 35v10M35 38l5-5 5 5" stroke="#0a0a1a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <defs>
+              <linearGradient id="uploadGrad" x1="28" y1="28" x2="52" y2="52" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#667eea"/>
+                <stop offset="1" stop-color="#764ba2"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="upload-text">
+          <span class="upload-heading">Drop your PDF here</span>
+          <span class="upload-or">or</span>
+          <label class="upload-btn" for="pdf-upload">Browse Files</label>
+          <span class="upload-hint">Supports any PDF document</span>
+        </div>
+        <input
+          id="pdf-upload"
+          type="file"
+          accept=".pdf,application/pdf"
+          (change)="onFileSelected($event)"
+          class="upload-input"
+          aria-label="Upload PDF file"
+        />
       </div>
     </div>
   }
 
-  @if (pdfServiceRef.errorMessage()) {
+  @if (pdfService.isLoaded()) {
+    <div class="toolbar" role="toolbar" aria-label="PDF controls">
+
+      <!-- Navigation -->
+      <div class="toolbar-group">
+        <button
+          class="toolbar-btn"
+          (click)="pdfService.previousPage()"
+          [disabled]="pdfService.currentPage() === 1"
+          aria-label="Previous page"
+          title="Previous page"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <span class="page-info">
+          <span class="page-current">{{ pdfService.currentPage() }}</span>
+          <span class="page-sep">/</span>
+          <span class="page-total">{{ pdfService.totalPages() }}</span>
+        </span>
+        <button
+          class="toolbar-btn"
+          (click)="pdfService.nextPage()"
+          [disabled]="pdfService.currentPage() === pdfService.totalPages()"
+          aria-label="Next page"
+          title="Next page"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+
+      <!-- Filename (hidden on small screens) -->
+      @if (pdfService.currentFileName()) {
+        <span class="filename-label" [title]="pdfService.currentFileName()!">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2 1h5l3 3v7H2V1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M7 1v3h3" stroke="currentColor" stroke-width="1.2"/></svg>
+          <span class="filename-text">{{ pdfService.currentFileName() }}</span>
+        </span>
+      }
+
+      <div class="toolbar-spacer"></div>
+
+      <!-- Zoom -->
+      <div class="toolbar-group">
+        <button
+          class="toolbar-btn"
+          (click)="pdfService.zoomOut()"
+          [disabled]="pdfService.scale() <= 0.25"
+          aria-label="Zoom out"
+          title="Zoom out"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+        <span class="zoom-info">{{ zoomPercent() }}%</span>
+        <button
+          class="toolbar-btn"
+          (click)="pdfService.zoomIn()"
+          [disabled]="pdfService.scale() >= 10"
+          aria-label="Zoom in"
+          title="Zoom in"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 4v8M4 8h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+        <button
+          class="toolbar-btn"
+          (click)="pdfService.resetZoom()"
+          aria-label="Reset zoom"
+          title="Reset zoom"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.3"/><path d="M10.5 10.5L13 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5.5 7h3M7 5.5v3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </button>
+        <!-- Fit to width -->
+        <button
+          class="toolbar-btn"
+          [class.toolbar-btn--active]="pdfService.isFitToWidth()"
+          (click)="onFitToWidthClick()"
+          aria-label="Fit to width"
+          title="Fit to width"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h12M2 4h4M10 4h4M2 12h4M10 12h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M5 6l-2 2 2 2M11 6l2 2-2 2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+
+      <!-- Open / Close -->
+      <div class="toolbar-group">
+        <label class="toolbar-btn" for="pdf-upload-replace" title="Open another PDF" aria-label="Open another PDF">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 3h5l1.5 1.5H14V13H2V3z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M8 7v4M6 9l2-2 2 2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </label>
+        <input
+          id="pdf-upload-replace"
+          type="file"
+          accept=".pdf,application/pdf"
+          (change)="onFileSelected($event)"
+          class="upload-input"
+          aria-label="Open another PDF file"
+        />
+        <button
+          class="toolbar-btn toolbar-btn--danger"
+          (click)="onClosePdf()"
+          aria-label="Close PDF"
+          title="Close PDF"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="canvas-wrapper" #canvasWrapper>
+      <div class="page-container">
+        <canvas #pdfCanvas aria-label="PDF page content"></canvas>
+        <div #textLayer class="textLayer"></div>
+      </div>
+    </div>
+  }
+
+  @if (pdfService.errorMessage()) {
     <div class="error-banner" role="alert">
-      {{ pdfServiceRef.errorMessage() }}
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v3.5M8 10.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span>{{ pdfService.errorMessage() }}</span>
     </div>
   }
 </div>

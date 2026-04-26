@@ -25,6 +25,7 @@
               }
             ],
             "styles": [
+              "node_modules/pdfjs-dist/web/pdf_viewer.css",
               "src/styles.css"
             ]
           },

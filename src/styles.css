@@ -1,11 +1,140 @@
-/* Global styles */
-* {
+/* ============================================
+   PDF Translator Reader — Global Design Tokens
+   ============================================ */
+
+:root {
+  /* Background layers */
+  --bg-primary: #0a0a1a;
+  --bg-secondary: #0f0f23;
+  --bg-elevated: #1a1a2e;
+  --bg-surface: #16213e;
+
+  /* Text */
+  --text-primary: #e8eaed;
+  --text-secondary: #9aa0a6;
+  --text-muted: #5f6368;
+  --text-inverse: #0a0a1a;
+
+  /* Accent gradient */
+  --accent-start: #667eea;
+  --accent-end: #764ba2;
+  --accent-gradient: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+
+  /* Accent solid */
+  --accent: #667eea;
+  --accent-hover: #5a6fd6;
+  --accent-subtle: rgba(102, 126, 234, 0.12);
+  --accent-border: rgba(102, 126, 234, 0.25);
+
+  /* Borders */
+  --border-color: rgba(255, 255, 255, 0.06);
+  --border-strong: rgba(255, 255, 255, 0.12);
+
+  /* Status */
+  --success: #34d399;
+  --error: #f87171;
+  --error-bg: rgba(248, 113, 113, 0.1);
+  --warning: #fbbf24;
+
+  /* Glass */
+  --glass-bg: rgba(15, 15, 35, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: 20px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --shadow-page: 0 4px 24px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.03);
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Font */
+  --font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Global reset */
+*,
+*::before,
+*::after {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 html, body {
-  margin: 0;
-  padding: 0;
   height: 100%;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-family);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-surface);
+  border-radius: 4px;
+  border: 2px solid var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 126, 234, 0.4);
+}
+
+/* Selection */
+::selection {
+  background-color: rgba(102, 126, 234, 0.35);
+  color: #fff;
+}
+
+/* Focus visible */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ================================================
+   pdfjs-dist text layer overrides
+   (pdf_viewer.css is loaded first via angular.json)
+   ================================================ */
+
+/* Ensure text layer sits precisely above the canvas */
+.textLayer {
+  z-index: 2 !important;
+  mix-blend-mode: multiply; /* Makes the highlight merge seamlessly with the text ink below, like native Chrome */
+}
+
+/* Chrome/Edge native PDF selection styling */
+.textLayer ::selection {
+  /* Classic crisp PDFium blue highlight */
+  background: rgba(50, 151, 253, 0.4) !important;
+  /* Keep the overlay text completely invisible so it doesn't double-render against the canvas */
+  color: transparent !important;
+}
+
+.textLayer span::selection {
+  background: rgba(50, 151, 253, 0.4) !important;
+  color: transparent !important;
+}
+
+.textLayer br::selection {
+  background: transparent !important;
 }
