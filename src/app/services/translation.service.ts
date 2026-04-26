@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
+import { ErrorNotificationService } from './error-notification.service';
 
 export interface TranslateOptions {
   text: string;
@@ -43,6 +44,8 @@ export const SUPPORTED_LANGUAGES: LanguageOption[] = [
   providedIn: 'root'
 })
 export class TranslationService {
+  private readonly errorNotifier = inject(ErrorNotificationService);
+
   // ─── API #1 (ACTIVE): MyMemory ─────────────────────────────────────────────
   //
   //  • Free, no API key required for anonymous use
@@ -137,6 +140,7 @@ export class TranslationService {
       this.translatedText.set(translated);
 
     } catch (err) {
+      this.errorNotifier.handleFetchError(err, 'translate text');
       const message = err instanceof Error ? err.message : 'Translation service unavailable';
       this.errorMessage.set(message);
     } finally {

@@ -1,0 +1,31 @@
+@if (!errorService.isOnline()) {
+  <div class="offline-bar" role="alert" aria-live="assertive">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M2 2l12 12M5.5 5.5A4 4 0 0112 9M3.5 7.5A4 4 0 0110 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="8" cy="11" r="1" fill="currentColor"/>
+    </svg>
+    <span>No internet connection</span>
+  </div>
+}
+
+@for (error of errorService.errors(); track error.id) {
+  <div
+    class="toast"
+    [class.toast--error]="error.type === 'error'"
+    [class.toast--warning]="error.type === 'warning'"
+    [class.toast--info]="error.type === 'info'"
+    role="alert"
+    aria-live="polite"
+  >
+    <span class="toast-message">{{ error.message }}</span>
+    <button
+      class="toast-close"
+      (click)="errorService.dismiss(error.id)"
+      aria-label="Dismiss notification"
+    >
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+        <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+}

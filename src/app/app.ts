@@ -2,10 +2,11 @@ import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
 import { PdfViewerComponent } from './components/pdf-viewer/pdf-viewer';
 import { SidebarComponent } from './components/sidebar/sidebar';
 import { TranslationPopupComponent } from './components/translation-popup/translation-popup';
+import { NotificationComponent } from './components/notification/notification';
 
 @Component({
   selector: 'app-root',
-  imports: [PdfViewerComponent, SidebarComponent, TranslationPopupComponent],
+  imports: [PdfViewerComponent, SidebarComponent, TranslationPopupComponent, NotificationComponent],
   templateUrl: './app.html',
   styleUrl: './app.css',
   changeDetection: ChangeDetectionStrategy.OnPush

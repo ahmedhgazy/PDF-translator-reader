@@ -12,6 +12,7 @@ import {
 import { SelectionService } from '../../services/selection.service';
 import { TranslationService } from '../../services/translation.service';
 import { TextToSpeechService } from '../../services/text-to-speech.service';
+import { ErrorNotificationService } from '../../services/error-notification.service';
 
 @Component({
   selector: 'app-translation-popup',
@@ -23,6 +24,7 @@ export class TranslationPopupComponent implements OnInit, OnDestroy {
   protected readonly selectionService = inject(SelectionService);
   protected readonly translationService = inject(TranslationService);
   protected readonly ttsService = inject(TextToSpeechService);
+  private readonly errorNotifier = inject(ErrorNotificationService);
 
   readonly popupRef = viewChild<ElementRef<HTMLDivElement>>('popup');
 
@@ -211,6 +213,7 @@ export class TranslationPopupComponent implements OnInit, OnDestroy {
       this.translationService.translate({ text, source, target });
 
     } catch (err) {
+      this.errorNotifier.handleFetchError(err, 'translate text');
       this.localError.set(err instanceof Error ? err.message : 'Translation failed');
     } finally {
       this.localLoading.set(false);
