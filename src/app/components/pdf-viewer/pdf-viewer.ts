@@ -13,7 +13,7 @@ import {
   HostListener
 } from '@angular/core';
 import { PdfService } from '../../services/pdf.service';
-import { SelectionService } from '../../services/selection.service';
+import { SelectionService, SelectionRect } from '../../services/selection.service';
 import { TranslationService } from '../../services/translation.service';
 
 @Component({
@@ -101,12 +101,12 @@ export class PdfViewerComponent implements OnInit, OnDestroy {
   }
 
   private selectionTimer: ReturnType<typeof setTimeout> | null = null;
-  private readonly onDocumentMouseUp = () => this.scheduleCaptureSelection(100);
-  private readonly onDocumentDblClick = () => this.scheduleCaptureSelection(15);
+  private readonly onDocumentMouseUp = (e: MouseEvent) => this.scheduleCaptureSelection(e, 80);
+  private readonly onDocumentDblClick = (e: MouseEvent) => this.scheduleCaptureSelection(e, 10);
 
-  private scheduleCaptureSelection(delayMs: number): void {
+  private scheduleCaptureSelection(event: MouseEvent, delayMs: number): void {
     if (this.selectionTimer) clearTimeout(this.selectionTimer);
-    this.selectionTimer = setTimeout(() => this.captureSelection(), delayMs);
+    this.selectionTimer = setTimeout(() => this.captureSelection(event), delayMs);
   }
 
   ngOnInit(): void {
@@ -170,7 +170,6 @@ export class PdfViewerComponent implements OnInit, OnDestroy {
 
   @HostListener('window:keydown', ['$event'])
   onKeyDown(event: KeyboardEvent): void {
-    // Only capture keyboard shortcuts when user is not typing in an input
     const target = event.target as HTMLElement;
     if (target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA')) {
       return;
@@ -189,30 +188,93 @@ export class PdfViewerComponent implements OnInit, OnDestroy {
     }
   }
 
-  private captureSelection(): void {
+  private getWordFromClick(event: MouseEvent): { word: string; rect: SelectionRect } | null {
+    const target = event.target as HTMLElement;
+    if (!target || !target.closest('.textLayer')) return null;
+
+    let range: Range | null = null;
+    if (document.caretRangeFromPoint) {
+      range = document.caretRangeFromPoint(event.clientX, event.clientY);
+    } else if ((document as any).caretPositionFromPoint) {
+      const pos = (document as any).caretPositionFromPoint(event.clientX, event.clientY);
+      if (pos) {
+        range = document.createRange();
+        range.setStart(pos.offsetNode, pos.offset);
+        range.collapse(true);
+      }
+    }
+
+    if (!range) return null;
+
+    const node = range.startContainer;
+    if (node.nodeType !== Node.TEXT_NODE || !node.textContent) return null;
+
+    const text = node.textContent;
+    const offset = range.startOffset;
+
+    // Expand outward to find word boundaries (letters, digits, unicode)
+    let start = offset;
+    while (start > 0 && /[\p{L}\p{N}]/u.test(text[start - 1])) {
+      start--;
+    }
+
+    let end = offset;
+    while (end < text.length && /[\p{L}\p{N}]/u.test(text[end])) {
+      end++;
+    }
+
+    const rawWord = text.substring(start, end).trim();
+    if (!rawWord) return null;
+
+    // Highlight the word visually
+    const wordRange = document.createRange();
+    wordRange.setStart(node, start);
+    wordRange.setEnd(node, end);
+
+    const sel = window.getSelection();
+    if (sel) {
+      sel.removeAllRanges();
+      sel.addRange(wordRange);
+    }
+
+    const domRect = wordRange.getBoundingClientRect();
+    return {
+      word: this.selectionService.normalizeText(rawWord),
+      rect: {
+        top: domRect.top,
+        bottom: domRect.bottom,
+        left: domRect.left,
+        right: domRect.right,
+        width: domRect.width,
+        height: domRect.height
+      }
+    };
+  }
+
+  private captureSelection(event?: MouseEvent): void {
     if (!this.pdfService.isLoaded()) return;
 
     const selection = window.getSelection();
     const wrapper = this.wrapperRef()?.nativeElement;
-    
-    if (!selection || selection.rangeCount === 0 || !wrapper || !wrapper.contains(selection.anchorNode)) {
-      return;
+
+    if (!wrapper) return;
+
+    let rawText = selection ? selection.toString() : '';
+
+    // If mouseup occurred with an empty selection (a single click on a word), use caret range extraction
+    if (!rawText.trim() && event) {
+      const clickResult = this.getWordFromClick(event);
+      if (clickResult) {
+        this.selectionService.setSelectedText(clickResult.word, clickResult.rect);
+        if (this.selectionService.autoTranslate()) {
+          this.translationService.translate({ text: clickResult.word });
+        }
+        return;
+      }
     }
 
-    let rawText = selection.toString();
-
-    // If selection is empty/collapsed inside a textLayer span, attempt to expand to word boundary
-    if (!rawText.trim() && selection.anchorNode && (selection.anchorNode.parentElement as HTMLElement)?.classList.contains('textLayer')) {
-      const range = selection.getRangeAt(0);
-      const textNode = range.startContainer;
-      if (textNode.nodeType === Node.TEXT_NODE && textNode.textContent) {
-        const text = textNode.textContent;
-        const offset = range.startOffset;
-        const start = text.lastIndexOf(' ', offset) + 1;
-        let end = text.indexOf(' ', offset);
-        if (end === -1) end = text.length;
-        rawText = text.substring(start, end);
-      }
+    if (!selection || selection.rangeCount === 0 || !wrapper.contains(selection.anchorNode)) {
+      return;
     }
 
     const text = this.selectionService.normalizeText(rawText);
