@@ -230,6 +230,19 @@ export class TranslationPopupComponent implements OnInit, OnDestroy {
     if (text) this.ttsService.speak(text, this.translationService.targetLanguage());
   }
 
+  saveToVocabulary(): void {
+    const original = this.selectionService.selectedText();
+    const translated = this.localTranslation();
+    if (original && translated) {
+      this.selectionService.addVocabulary(
+        original,
+        translated,
+        this.translationService.sourceLanguage(),
+        this.translationService.targetLanguage()
+      );
+    }
+  }
+
   async copyTranslation(): Promise<void> {
     const text = this.localTranslation();
     if (!text) return;
@@ -239,3 +252,4 @@ export class TranslationPopupComponent implements OnInit, OnDestroy {
     this.copyTimeout = setTimeout(() => this.copied.set(false), 1500);
   }
 }
+

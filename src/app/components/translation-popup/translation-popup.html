@@ -61,6 +61,16 @@
         <div class="popup-result">
           <p class="popup-translated-text">{{ localTranslation() }}</p>
           <div class="popup-result-actions">
+            <button
+              class="popup-icon-btn"
+              (click)="saveToVocabulary()"
+              [class.saved]="selectionService.isSavedInVocabulary(selectionService.selectedText())"
+              aria-label="Save to Vocabulary Bookmarks"
+              title="Bookmark term"
+            >
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M3 2h7a1 1 0 011 1v8.5l-4.5-2.25L2 11.5V3a1 1 0 011-1z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+            </button>
+
             @if (ttsService.isSupported()) {
               <button
                 class="popup-icon-btn"

@@ -1,7 +1,7 @@
 :host {
   display: flex;
   flex-direction: column;
-  height: 100dvh; /* dynamic viewport height — handles mobile browser chrome */
+  height: 100dvh;
   overflow: hidden;
   background-color: var(--bg-primary);
 }
@@ -14,8 +14,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 1.25rem;
-  height: 3.25rem;
-  min-height: 3.25rem;
+  height: 3.5rem;
+  min-height: 3.5rem;
   background: var(--glass-bg);
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
@@ -33,7 +33,7 @@
   right: 0;
   height: 2px;
   background: var(--accent-gradient);
-  opacity: 0.6;
+  opacity: 0.8;
 }
 
 .header-left {
@@ -44,19 +44,35 @@
 }
 
 .logo-icon {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 36px;
   height: 36px;
   flex-shrink: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--accent-subtle);
+  border: 1px solid var(--accent-border);
   transition: transform var(--transition-base);
 }
 
+.logo-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-md);
+  background: var(--accent-gradient);
+  filter: blur(10px);
+  opacity: 0.4;
+}
+
+.logo-icon svg {
+  position: relative;
+  z-index: 1;
+}
+
 .logo-icon:hover {
-  transform: scale(1.05);
+  transform: scale(1.06);
 }
 
 .header-text {
@@ -68,19 +84,32 @@
 
 .app-title {
   margin: 0;
-  font-size: 0.9375rem;
-  font-weight: 700;
+  font-size: 0.95rem;
+  font-weight: 800;
   color: var(--text-primary);
   letter-spacing: -0.01em;
   line-height: 1.2;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.app-version-chip {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--accent-mid);
+  background: var(--accent-subtle);
+  border: 1px solid var(--accent-border);
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--radius-full);
 }
 
 .app-subtitle {
   font-size: 0.6875rem;
-  font-weight: 400;
+  font-weight: 500;
   color: var(--text-muted);
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -92,25 +121,36 @@
   flex-shrink: 0;
 }
 
-.header-badge {
-  padding: 0.25rem 0.625rem;
-  font-size: 0.6875rem;
+.header-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.78125rem;
   font-weight: 600;
-  color: var(--accent-start);
-  background: var(--accent-subtle);
-  border: 1px solid var(--accent-border);
-  border-radius: 20px;
-  letter-spacing: 0.04em;
+  font-family: var(--font-family);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.header-action-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
 }
 
 .sidebar-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   padding: 0;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
@@ -119,7 +159,7 @@
 }
 
 .sidebar-toggle:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.08);
   border-color: var(--border-strong);
   color: var(--text-primary);
 }
@@ -132,7 +172,6 @@
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  transition: none;
 }
 
 .viewer-pane {
@@ -141,47 +180,123 @@
   overflow: hidden;
 }
 
-/* Desktop sidebar */
 .sidebar-pane {
   width: 380px;
   flex-shrink: 0;
   overflow: hidden;
   border-left: 1px solid var(--border-color);
-  transition:
-    width var(--transition-base),
-    opacity var(--transition-base);
+  transition: width var(--transition-base), opacity var(--transition-base);
 }
 
 .app-layout.sidebar-collapsed .sidebar-pane {
   width: 0;
   opacity: 0;
   border-left: none;
-  overflow: hidden;
   pointer-events: none;
 }
 
 /* ==============================
-   Tablet  (< 1100px)
+   Keyboard Shortcuts Modal
    ============================== */
-@media (max-width: 1100px) {
-  .sidebar-pane {
-    width: 320px;
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 5, 13, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 420px;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+
+  &:hover { color: var(--text-primary); }
+}
+
+.modal-body {
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0;
+
+  &:not(:last-child) {
+    border-bottom: 1px dashed var(--border-color);
   }
 }
 
-/* ==============================
-   Tablet portrait / large mobile  (< 768px)
-   ============================== */
-@media (max-width: 768px) {
-  .app-header {
-    padding: 0 0.875rem;
-  }
+.shortcut-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
 
-  .header-badge {
+.kbd {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
+}
+
+/* ==============================
+   Responsive Breakpoints
+   ============================== */
+@media (max-width: 1100px) {
+  .sidebar-pane {
+    width: 340px;
+  }
+}
+
+@media (max-width: 768px) {
+  .btn-label {
     display: none;
   }
 
-  /* On mobile the sidebar becomes a bottom drawer */
   .app-layout {
     flex-direction: column;
   }
@@ -191,69 +306,30 @@
     height: 0;
     border-left: none;
     border-top: 1px solid var(--border-color);
-    transition:
-      height var(--transition-base),
-      opacity var(--transition-base);
-    overflow: hidden;
+    transition: height var(--transition-base), opacity var(--transition-base);
     opacity: 0;
     pointer-events: none;
   }
 
   .sidebar-pane.sidebar-pane--open {
-    height: 45vh;
-    min-height: 280px;
+    height: 48vh;
     opacity: 1;
     pointer-events: auto;
   }
-
-  /* Override collapsed state — on mobile collapsed means height: 0 */
-  .app-layout.sidebar-collapsed .sidebar-pane {
-    width: 100% !important;
-    height: 0;
-    opacity: 0;
-    pointer-events: none;
-  }
 }
 
-/* ==============================
-   Small mobile  (< 480px)
-   ============================== */
-@media (max-width: 480px) {
-  .app-title {
-    font-size: 0.875rem;
-  }
-
-  .app-subtitle {
-    display: none;
-  }
-
-  .logo-icon {
-    width: 30px;
-    height: 30px;
-  }
-
-  .sidebar-pane.sidebar-pane--open {
-    height: 50vh;
-  }
-}
-
-/* ==============================
-   Footer
-   ============================== */
+/* Footer */
 .app-footer {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 2rem;
-  min-height: 2rem;
+  height: 2.25rem;
+  min-height: 2.25rem;
   background: var(--glass-bg);
   border-top: 1px solid var(--border-color);
   font-size: 0.75rem;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   flex-shrink: 0;
   z-index: 20;
 }
 
-.app-footer span {
-  letter-spacing: 0.02em;
-}

@@ -7,27 +7,43 @@
       (dragleave)="onDragLeave($event)"
       (drop)="onDrop($event)"
     >
+      <div class="upload-backdrop"></div>
       <div class="upload-content">
-        <div class="upload-icon" aria-hidden="true">
-          <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="8" y="6" width="32" height="40" rx="3" stroke="currentColor" stroke-width="2" stroke-dasharray="4 3"/>
-            <path d="M15 22h18M15 28h14M15 34h18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
-            <circle cx="40" cy="40" r="12" fill="url(#uploadGrad)" opacity="0.9"/>
-            <path d="M40 35v10M35 38l5-5 5 5" stroke="#0a0a1a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <div class="upload-icon-wrapper">
+          <div class="upload-glow"></div>
+          <svg class="upload-svg" width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="12" y="8" width="36" height="48" rx="8" fill="rgba(99, 102, 241, 0.08)" stroke="url(#cardGrad)" stroke-width="2"/>
+            <path d="M20 24h20M20 32h14M20 40h20" stroke="rgba(255, 255, 255, 0.4)" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="48" cy="48" r="14" fill="url(#uploadGrad)"/>
+            <path d="M48 42v12M42 46l6-6 6 6" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
             <defs>
-              <linearGradient id="uploadGrad" x1="28" y1="28" x2="52" y2="52" gradientUnits="userSpaceOnUse">
-                <stop stop-color="#667eea"/>
-                <stop offset="1" stop-color="#764ba2"/>
+              <linearGradient id="cardGrad" x1="12" y1="8" x2="48" y2="56" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#6366f1"/>
+                <stop offset="1" stop-color="#ec4899"/>
+              </linearGradient>
+              <linearGradient id="uploadGrad" x1="34" y1="34" x2="62" y2="62" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#6366f1"/>
+                <stop offset="1" stop-color="#8b5cf6"/>
               </linearGradient>
             </defs>
           </svg>
         </div>
+
         <div class="upload-text">
-          <span class="upload-heading">Drop your PDF here</span>
-          <span class="upload-or">or</span>
-          <label class="upload-btn" for="pdf-upload">Browse Files</label>
-          <span class="upload-hint">Supports any PDF document</span>
+          <h2 class="upload-heading">Drop your PDF document here</h2>
+          <p class="upload-sub">or browse files from your computer to start reading and translating</p>
+          <label class="upload-btn" for="pdf-upload">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 3v9M5 7l4-4 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 14h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            Choose PDF File
+          </label>
         </div>
+
+        <div class="upload-features">
+          <span class="feature-chip"><span class="chip-dot"></span> Accurate Selection</span>
+          <span class="feature-chip"><span class="chip-dot"></span> Instant Translation</span>
+          <span class="feature-chip"><span class="chip-dot"></span> Text-to-Speech</span>
+        </div>
+
         <input
           id="pdf-upload"
           type="file"
@@ -50,66 +66,86 @@
           (click)="pdfService.previousPage()"
           [disabled]="pdfService.currentPage() === 1"
           aria-label="Previous page"
-          title="Previous page"
+          title="Previous page (Left Arrow)"
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
-        <span class="page-info">
-          <span class="page-current">{{ pdfService.currentPage() }}</span>
+
+        <div class="page-jump-box">
+          <input
+            type="number"
+            class="page-input"
+            [value]="pdfService.currentPage()"
+            (change)="onPageInputChange($event)"
+            min="1"
+            [max]="pdfService.totalPages()"
+            aria-label="Current page number"
+          />
           <span class="page-sep">/</span>
           <span class="page-total">{{ pdfService.totalPages() }}</span>
-        </span>
+        </div>
+
         <button
           class="toolbar-btn"
           (click)="pdfService.nextPage()"
           [disabled]="pdfService.currentPage() === pdfService.totalPages()"
           aria-label="Next page"
-          title="Next page"
+          title="Next page (Right Arrow)"
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
       </div>
 
-      <!-- Filename (hidden on small screens) -->
+      <!-- Filename -->
       @if (pdfService.currentFileName()) {
-        <span class="filename-label" [title]="pdfService.currentFileName()!">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2 1h5l3 3v7H2V1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M7 1v3h3" stroke="currentColor" stroke-width="1.2"/></svg>
+        <div class="filename-pill" [title]="pdfService.currentFileName()!">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 2h5l3 3v7H3V2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M8 2v3h3" stroke="currentColor" stroke-width="1.3"/></svg>
           <span class="filename-text">{{ pdfService.currentFileName() }}</span>
-        </span>
+        </div>
       }
 
       <div class="toolbar-spacer"></div>
 
-      <!-- Zoom -->
+      <!-- Zoom Controls & Presets -->
       <div class="toolbar-group">
         <button
           class="toolbar-btn"
           (click)="pdfService.zoomOut()"
           [disabled]="pdfService.scale() <= 0.25"
           aria-label="Zoom out"
-          title="Zoom out"
+          title="Zoom out (-)"
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
         </button>
-        <span class="zoom-info">{{ zoomPercent() }}%</span>
+
+        <div class="zoom-select-wrap">
+          <select
+            class="zoom-select"
+            (change)="onZoomPresetChange($event)"
+            [value]="pdfService.isFitToWidth() ? 'fit' : pdfService.scale()"
+            aria-label="Zoom level preset"
+          >
+            <option value="0.5">50%</option>
+            <option value="0.75">75%</option>
+            <option value="1">100%</option>
+            <option value="1.25">125%</option>
+            <option value="1.5">150%</option>
+            <option value="2">200%</option>
+            <option value="fit">Fit Width</option>
+          </select>
+        </div>
+
         <button
           class="toolbar-btn"
           (click)="pdfService.zoomIn()"
           [disabled]="pdfService.scale() >= 10"
           aria-label="Zoom in"
-          title="Zoom in"
+          title="Zoom in (+)"
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 4v8M4 8h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 4v8M4 8h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
         </button>
-        <button
-          class="toolbar-btn"
-          (click)="pdfService.resetZoom()"
-          aria-label="Reset zoom"
-          title="Reset zoom"
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.3"/><path d="M10.5 10.5L13 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5.5 7h3M7 5.5v3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-        </button>
-        <!-- Fit to width -->
+
+        <!-- Fit to Width -->
         <button
           class="toolbar-btn"
           [class.toolbar-btn--active]="pdfService.isFitToWidth()"
@@ -117,14 +153,25 @@
           aria-label="Fit to width"
           title="Fit to width"
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h12M2 4h4M10 4h4M2 12h4M10 12h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M5 6l-2 2 2 2M11 6l2 2-2 2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h12M2 4h4M10 4h4M2 12h4M10 12h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M5 6l-2 2 2 2M11 6l2 2-2 2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+
+        <!-- Fullscreen -->
+        <button
+          class="toolbar-btn"
+          [class.toolbar-btn--active]="isFullscreen()"
+          (click)="toggleFullscreen()"
+          aria-label="Toggle fullscreen"
+          title="Toggle fullscreen"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5V2h3M14 5V2h-3M2 11v3h3M14 11v3h-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
       </div>
 
-      <!-- Open / Close -->
+      <!-- File actions -->
       <div class="toolbar-group">
         <label class="toolbar-btn" for="pdf-upload-replace" title="Open another PDF" aria-label="Open another PDF">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 3h5l1.5 1.5H14V13H2V3z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M8 7v4M6 9l2-2 2 2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 3h5l1.5 1.5H14V13H2V3z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M8 7v4M6 9l2-2 2 2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </label>
         <input
           id="pdf-upload-replace"
@@ -134,13 +181,14 @@
           class="upload-input"
           aria-label="Open another PDF file"
         />
+
         <button
           class="toolbar-btn toolbar-btn--danger"
           (click)="onClosePdf()"
           aria-label="Close PDF"
           title="Close PDF"
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
         </button>
       </div>
     </div>
@@ -160,3 +208,4 @@
     </div>
   }
 </div>
+

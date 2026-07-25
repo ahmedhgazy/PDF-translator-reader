@@ -7,10 +7,12 @@ import {
   inject,
   signal,
   OnInit,
-  OnDestroy
+  OnDestroy,
+  HostListener
 } from '@angular/core';
 import { PdfService } from '../../services/pdf.service';
 import { SelectionService } from '../../services/selection.service';
+import { TranslationService } from '../../services/translation.service';
 
 @Component({
   selector: 'app-pdf-viewer',
@@ -20,7 +22,8 @@ import { SelectionService } from '../../services/selection.service';
 })
 export class PdfViewerComponent implements OnInit, OnDestroy {
   protected readonly pdfService = inject(PdfService);
-  private readonly selectionService = inject(SelectionService);
+  protected readonly selectionService = inject(SelectionService);
+  private readonly translationService = inject(TranslationService);
 
   readonly canvasRef = viewChild<ElementRef<HTMLCanvasElement>>('pdfCanvas');
   readonly textLayerRef = viewChild<ElementRef<HTMLDivElement>>('textLayer');
@@ -28,6 +31,7 @@ export class PdfViewerComponent implements OnInit, OnDestroy {
 
   readonly isDragging = signal(false);
   readonly zoomPercent = signal(150);
+  readonly isFullscreen = signal(false);
 
   private readonly onDocumentMouseUp = () => this.captureSelection();
   private resizeObserver: ResizeObserver | null = null;
@@ -61,14 +65,12 @@ export class PdfViewerComponent implements OnInit, OnDestroy {
     this.pdfService.tryRestoreLastPdf();
     document.addEventListener('mouseup', this.onDocumentMouseUp);
 
-    // Watch container resize to support fit-to-width
     this.resizeObserver = new ResizeObserver(() => {
       if (this.pdfService.isFitToWidth()) {
         this.applyFitToWidth();
       }
     });
 
-    // Observe after a tick so wrapperRef is available
     setTimeout(() => {
       const wrapper = this.wrapperRef();
       if (wrapper) {
@@ -82,18 +84,40 @@ export class PdfViewerComponent implements OnInit, OnDestroy {
     this.resizeObserver?.disconnect();
   }
 
+  @HostListener('window:keydown', ['$event'])
+  onKeyDown(event: KeyboardEvent): void {
+    // Only capture keyboard shortcuts when user is not typing in an input
+    const target = event.target as HTMLElement;
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA')) {
+      return;
+    }
+
+    if (this.pdfService.isLoaded()) {
+      if (event.key === 'ArrowLeft') {
+        this.pdfService.previousPage();
+      } else if (event.key === 'ArrowRight') {
+        this.pdfService.nextPage();
+      } else if (event.key === '+' || event.key === '=') {
+        this.pdfService.zoomIn();
+      } else if (event.key === '-') {
+        this.pdfService.zoomOut();
+      }
+    }
+  }
+
   private captureSelection(): void {
     if (!this.pdfService.isLoaded()) return;
     setTimeout(() => {
       const selection = window.getSelection();
       const wrapper = this.wrapperRef()?.nativeElement;
       
-      // Only proceed if the selection occurred INSIDE the PDF viewer area
       if (!selection || selection.rangeCount === 0 || !wrapper || !wrapper.contains(selection.anchorNode)) {
         return;
       }
 
-      const text = selection.toString().trim();
+      const rawText = selection.toString();
+      const text = this.selectionService.normalizeText(rawText);
+
       if (text.length > 0) {
         const domRect = selection.getRangeAt(0).getBoundingClientRect();
         this.selectionService.setSelectedText(text, {
@@ -104,16 +128,40 @@ export class PdfViewerComponent implements OnInit, OnDestroy {
           width: domRect.width,
           height: domRect.height
         });
+
+        // Auto-translate if feature is active
+        if (this.selectionService.autoTranslate()) {
+          this.translationService.translate({ text });
+        }
       }
     }, 50);
   }
 
-  /** Calculate and apply scale so the PDF fills the wrapper width. */
+  onPageInputChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const val = parseInt(input.value, 10);
+    if (!isNaN(val)) {
+      this.pdfService.goToPage(val);
+    }
+  }
+
+  onZoomPresetChange(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    const val = select.value;
+    if (val === 'fit') {
+      this.onFitToWidthClick();
+    } else {
+      const num = parseFloat(val);
+      if (!isNaN(num)) {
+        this.pdfService.setZoomScale(num);
+      }
+    }
+  }
+
   applyFitToWidth(): void {
     const wrapper = this.wrapperRef();
     if (!wrapper) return;
-    // Get usable width (subtract padding)
-    const available = wrapper.nativeElement.clientWidth - 32; // 16px padding each side
+    const available = wrapper.nativeElement.clientWidth - 48; // Usable width
     if (available <= 0) return;
     this.pdfService.fitToWidth(available);
   }
@@ -122,6 +170,17 @@ export class PdfViewerComponent implements OnInit, OnDestroy {
     this.pdfService.toggleFitToWidth();
     if (this.pdfService.isFitToWidth()) {
       this.applyFitToWidth();
+    }
+  }
+
+  toggleFullscreen(): void {
+    const wrapper = this.wrapperRef()?.nativeElement;
+    if (!wrapper) return;
+
+    if (!document.fullscreenElement) {
+      wrapper.requestFullscreen().then(() => this.isFullscreen.set(true)).catch(() => {});
+    } else {
+      document.exitFullscreen().then(() => this.isFullscreen.set(false)).catch(() => {});
     }
   }
 
@@ -162,3 +221,4 @@ export class PdfViewerComponent implements OnInit, OnDestroy {
     this.selectionService.clear();
   }
 }
+

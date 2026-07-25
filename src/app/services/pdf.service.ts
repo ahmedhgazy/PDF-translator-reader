@@ -140,6 +140,7 @@ export class PdfService {
     container.innerHTML = '';
     container.style.width = `${viewport.width}px`;
     container.style.height = `${viewport.height}px`;
+    container.style.setProperty('--scale-factor', `${viewport.scale}`);
 
     const textLayer = new TextLayer({
       textContentSource: textContent,
@@ -158,6 +159,12 @@ export class PdfService {
 
   nextPage(): void { this.goToPage(this.currentPage() + 1); }
   previousPage(): void { this.goToPage(this.currentPage() - 1); }
+
+  setZoomScale(newScale: number): void {
+    this.isFitToWidth.set(false);
+    const clamped = Math.max(0.25, Math.min(newScale, 10));
+    this.scale.set(parseFloat(clamped.toFixed(3)));
+  }
 
   zoomIn(): void {
     this.isFitToWidth.set(false);
