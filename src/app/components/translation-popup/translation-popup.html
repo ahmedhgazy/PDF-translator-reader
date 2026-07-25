@@ -10,7 +10,7 @@
     <!-- Arrow indicator pointing to selection -->
     <div class="popup-arrow" [style]="arrowStyle()"></div>
 
-    <!-- Header -->
+    <!-- Header / Drag Bar -->
     <div class="popup-header draggable" (mousedown)="onDragStart($event)">
       <div class="popup-lang-pair">
         <span class="lang-tag">{{ translationService.sourceLanguage().toUpperCase() }}</span>
@@ -23,6 +23,7 @@
         class="popup-close"
         (click)="close()"
         aria-label="Close translation popup"
+        title="Close (Esc)"
       >
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
           <path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -30,7 +31,7 @@
       </button>
     </div>
 
-    <!-- Selected text -->
+    <!-- Selected Source text -->
     <div class="popup-source">
       <p class="popup-source-text">{{ selectionService.selectedText() }}</p>
       @if (ttsService.isSupported()) {
@@ -38,7 +39,7 @@
           class="popup-icon-btn"
           (click)="speakSource()"
           aria-label="Read selected text aloud"
-          title="Listen"
+          title="Listen original text"
         >
           <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
             <path d="M1.5 5H3l3-2.5v8L3 8H1.5a.5.5 0 01-.5-.5v-2a.5.5 0 01.5-.5z" fill="currentColor"/>
@@ -50,7 +51,7 @@
 
     <div class="popup-divider"></div>
 
-    <!-- Translation area -->
+    <!-- Instant Translation Area -->
     <div class="popup-translation">
       @if (localLoading()) {
         <div class="popup-loading">
@@ -60,15 +61,17 @@
       } @else if (localTranslation()) {
         <div class="popup-result">
           <p class="popup-translated-text">{{ localTranslation() }}</p>
+
           <div class="popup-result-actions">
             <button
-              class="popup-icon-btn"
+              class="popup-action-pill"
               (click)="saveToVocabulary()"
               [class.saved]="selectionService.isSavedInVocabulary(selectionService.selectedText())"
               aria-label="Save to Vocabulary Bookmarks"
-              title="Bookmark term"
+              title="Bookmark word / phrase"
             >
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M3 2h7a1 1 0 011 1v8.5l-4.5-2.25L2 11.5V3a1 1 0 011-1z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M3 2h7a1 1 0 011 1v8.5l-4.5-2.25L2 11.5V3a1 1 0 011-1z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+              <span>{{ selectionService.isSavedInVocabulary(selectionService.selectedText()) ? 'Saved' : 'Save' }}</span>
             </button>
 
             @if (ttsService.isSupported()) {
@@ -76,7 +79,7 @@
                 class="popup-icon-btn"
                 (click)="speakTranslation()"
                 aria-label="Read translation aloud"
-                title="Listen"
+                title="Listen translation"
               >
                 <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
                   <path d="M1.5 5H3l3-2.5v8L3 8H1.5a.5.5 0 01-.5-.5v-2a.5.5 0 01.5-.5z" fill="currentColor"/>
@@ -84,6 +87,7 @@
                 </svg>
               </button>
             }
+
             <button
               class="popup-icon-btn"
               (click)="copyTranslation()"
@@ -112,41 +116,8 @@
           </svg>
           <span>{{ localError() }}</span>
         </div>
-      } @else {
-        <p class="popup-placeholder">Press Translate to see the result</p>
-      }
-    </div>
-
-    <!-- Footer action -->
-    <div class="popup-footer">
-      <button
-        class="popup-translate-btn"
-        (click)="onTranslate()"
-        [disabled]="localLoading()"
-        aria-label="Translate selected text"
-      >
-        @if (localLoading()) {
-          <span class="spinner spinner--sm" aria-hidden="true"></span>
-          Translating…
-        } @else {
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-            <path d="M2 3h6M4.5 3v1c0 2-1.5 3-3 3M3 5c0 1.5 1.5 2.5 3 2.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M8.5 12l1.5-4.5L11.5 12M9 10.5h2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          Translate
-        }
-      </button>
-      @if (ttsService.isSpeaking()) {
-        <button
-          class="popup-stop-btn"
-          (click)="ttsService.stop()"
-          aria-label="Stop speaking"
-        >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-            <rect x="2" y="2" width="8" height="8" rx="1" fill="currentColor"/>
-          </svg>
-        </button>
       }
     </div>
   </div>
 }
+

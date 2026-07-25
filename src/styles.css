@@ -199,7 +199,7 @@ html, body {
 }
 
 /* ================================================
-   pdfjs-dist text layer overrides
+   pdfjs-dist text layer overrides & selection UX
    ================================================ */
 .textLayer {
   z-index: 2 !important;
@@ -209,18 +209,30 @@ html, body {
 }
 
 .textLayer ::selection {
-  background: rgba(99, 102, 241, 0.38) !important;
+  background: rgba(99, 102, 241, 0.5) !important;
   color: transparent !important;
-  border-radius: 2px;
+  border-radius: 3px;
 }
 
 .textLayer span::selection {
-  background: rgba(99, 102, 241, 0.38) !important;
+  background: rgba(99, 102, 241, 0.5) !important;
   color: transparent !important;
 }
 
 .textLayer br::selection {
   background: transparent !important;
+}
+
+/* In Dark Page Theme: Glowing Violet Selection Highlight */
+.canvas-wrapper.page-theme--dark .textLayer ::selection,
+.canvas-wrapper.page-theme--dark .textLayer span::selection {
+  background: rgba(139, 92, 246, 0.65) !important;
+}
+
+/* In Sepia Theme: Warm Amber Selection Highlight */
+.canvas-wrapper.page-theme--sepia .textLayer ::selection,
+.canvas-wrapper.page-theme--sepia .textLayer span::selection {
+  background: rgba(217, 119, 6, 0.5) !important;
 }
 
 

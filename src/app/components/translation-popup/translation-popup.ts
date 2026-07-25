@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   inject,
   computed,
+  effect,
   OnInit,
   OnDestroy,
   signal,
@@ -40,6 +41,16 @@ export class TranslationPopupComponent implements OnInit, OnDestroy {
   private dragStartPos = {x: 0, y: 0};
 
   private copyTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  constructor() {
+    effect(() => {
+      const text = this.selectionService.selectedText();
+      const visible = this.selectionService.isPopupVisible();
+      if (visible && text) {
+        this.onTranslate();
+      }
+    });
+  }
   private readonly onClickOutside = (e: MouseEvent) => this.handleOutsideClick(e);
   private readonly onScroll = () => this.selectionService.closePopup();
   private readonly onKeyDown = (e: KeyboardEvent) => {
