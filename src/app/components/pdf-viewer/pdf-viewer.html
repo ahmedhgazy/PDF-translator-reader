@@ -94,10 +94,12 @@
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
+      </div>
 
-        <!-- View Mode (Continuous vs Single) -->
+      <!-- View Mode Group -->
+      <div class="toolbar-group">
         <button
-          class="toolbar-btn"
+          class="toolbar-btn toolbar-btn-wide"
           [class.toolbar-btn--active]="pdfService.scrollMode() === 'continuous'"
           (click)="pdfService.toggleScrollMode()"
           title="Toggle Scroll Mode (Continuous vs Single Page)"
