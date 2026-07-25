@@ -206,6 +206,16 @@ html, body {
   opacity: 1 !important;
   mix-blend-mode: multiply;
   line-height: 1;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  pointer-events: auto !important;
+}
+
+.textLayer span {
+  pointer-events: auto !important;
+  cursor: text !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
 }
 
 .textLayer ::selection {

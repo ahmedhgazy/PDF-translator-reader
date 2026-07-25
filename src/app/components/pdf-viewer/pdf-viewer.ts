@@ -40,7 +40,6 @@ export class PdfViewerComponent implements OnInit, OnDestroy {
     Array.from({ length: this.pdfService.totalPages() }, (_, i) => i + 1)
   );
 
-  private readonly onDocumentMouseUp = () => this.captureSelection();
   private resizeObserver: ResizeObserver | null = null;
   private intersectionObserver: IntersectionObserver | null = null;
 
@@ -101,9 +100,19 @@ export class PdfViewerComponent implements OnInit, OnDestroy {
     });
   }
 
+  private selectionTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly onDocumentMouseUp = () => this.scheduleCaptureSelection(100);
+  private readonly onDocumentDblClick = () => this.scheduleCaptureSelection(15);
+
+  private scheduleCaptureSelection(delayMs: number): void {
+    if (this.selectionTimer) clearTimeout(this.selectionTimer);
+    this.selectionTimer = setTimeout(() => this.captureSelection(), delayMs);
+  }
+
   ngOnInit(): void {
     this.pdfService.tryRestoreLastPdf();
     document.addEventListener('mouseup', this.onDocumentMouseUp);
+    document.addEventListener('dblclick', this.onDocumentDblClick);
 
     this.resizeObserver = new ResizeObserver(() => {
       if (this.pdfService.isFitToWidth()) {
@@ -121,8 +130,10 @@ export class PdfViewerComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     document.removeEventListener('mouseup', this.onDocumentMouseUp);
+    document.removeEventListener('dblclick', this.onDocumentDblClick);
     this.resizeObserver?.disconnect();
     this.intersectionObserver?.disconnect();
+    if (this.selectionTimer) clearTimeout(this.selectionTimer);
   }
 
   private setupIntersectionObserver(): void {
@@ -180,34 +191,48 @@ export class PdfViewerComponent implements OnInit, OnDestroy {
 
   private captureSelection(): void {
     if (!this.pdfService.isLoaded()) return;
-    setTimeout(() => {
-      const selection = window.getSelection();
-      const wrapper = this.wrapperRef()?.nativeElement;
-      
-      if (!selection || selection.rangeCount === 0 || !wrapper || !wrapper.contains(selection.anchorNode)) {
-        return;
+
+    const selection = window.getSelection();
+    const wrapper = this.wrapperRef()?.nativeElement;
+    
+    if (!selection || selection.rangeCount === 0 || !wrapper || !wrapper.contains(selection.anchorNode)) {
+      return;
+    }
+
+    let rawText = selection.toString();
+
+    // If selection is empty/collapsed inside a textLayer span, attempt to expand to word boundary
+    if (!rawText.trim() && selection.anchorNode && (selection.anchorNode.parentElement as HTMLElement)?.classList.contains('textLayer')) {
+      const range = selection.getRangeAt(0);
+      const textNode = range.startContainer;
+      if (textNode.nodeType === Node.TEXT_NODE && textNode.textContent) {
+        const text = textNode.textContent;
+        const offset = range.startOffset;
+        const start = text.lastIndexOf(' ', offset) + 1;
+        let end = text.indexOf(' ', offset);
+        if (end === -1) end = text.length;
+        rawText = text.substring(start, end);
       }
+    }
 
-      const rawText = selection.toString();
-      const text = this.selectionService.normalizeText(rawText);
+    const text = this.selectionService.normalizeText(rawText);
 
-      if (text.length > 0) {
-        const domRect = selection.getRangeAt(0).getBoundingClientRect();
-        this.selectionService.setSelectedText(text, {
-          top: domRect.top,
-          bottom: domRect.bottom,
-          left: domRect.left,
-          right: domRect.right,
-          width: domRect.width,
-          height: domRect.height
-        });
+    if (text.length > 0) {
+      const domRect = selection.getRangeAt(0).getBoundingClientRect();
+      this.selectionService.setSelectedText(text, {
+        top: domRect.top,
+        bottom: domRect.bottom,
+        left: domRect.left,
+        right: domRect.right,
+        width: domRect.width,
+        height: domRect.height
+      });
 
-        // Auto-translate if feature is active
-        if (this.selectionService.autoTranslate()) {
-          this.translationService.translate({ text });
-        }
+      // Auto-translate if feature is active
+      if (this.selectionService.autoTranslate()) {
+        this.translationService.translate({ text });
       }
-    }, 50);
+    }
   }
 
   onPageInputChange(event: Event): void {
