@@ -406,12 +406,78 @@
   flex-shrink: 0;
 }
 
+.btn-label-sm {
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 0.25rem;
+  white-space: nowrap;
+}
+
+/* Theme Selector Group */
+.theme-selector-group {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem;
+}
+
+.theme-chip {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+
+.theme-chip:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.theme-chip--active {
+  background: var(--accent-subtle) !important;
+  color: var(--accent) !important;
+  border-color: var(--accent-border) !important;
+}
+
+/* Continuous Page Scroll Layout */
+.continuous-pages-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  width: 100%;
+}
+
+.page-number-indicator {
+  margin-top: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+
+/* Eye-Care Reading Filters */
+.canvas-wrapper.page-theme--dark canvas {
+  filter: invert(0.9) hue-rotate(180deg);
+}
+
+.canvas-wrapper.page-theme--sepia canvas {
+  filter: sepia(0.35) contrast(0.95) brightness(0.98);
+}
+
 /* ==============================
    Responsive Queries
    ============================== */
 @media (max-width: 900px) {
-  .filename-pill {
-    max-width: 140px;
+  .filename-pill,
+  .theme-selector-group {
+    display: none;
   }
 }
 
@@ -439,4 +505,5 @@
     padding: 0.35rem 0.5rem;
   }
 }
+
 

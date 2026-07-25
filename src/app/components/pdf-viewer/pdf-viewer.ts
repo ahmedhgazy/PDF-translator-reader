@@ -2,10 +2,12 @@ import {
   Component,
   ChangeDetectionStrategy,
   viewChild,
+  viewChildren,
   ElementRef,
   effect,
   inject,
   signal,
+  computed,
   OnInit,
   OnDestroy,
   HostListener
@@ -28,25 +30,33 @@ export class PdfViewerComponent implements OnInit, OnDestroy {
   readonly canvasRef = viewChild<ElementRef<HTMLCanvasElement>>('pdfCanvas');
   readonly textLayerRef = viewChild<ElementRef<HTMLDivElement>>('textLayer');
   readonly wrapperRef = viewChild<ElementRef<HTMLDivElement>>('canvasWrapper');
+  readonly pageContainers = viewChildren<ElementRef<HTMLDivElement>>('pageContainer');
 
   readonly isDragging = signal(false);
   readonly zoomPercent = signal(150);
   readonly isFullscreen = signal(false);
 
+  readonly pageNumbers = computed(() =>
+    Array.from({ length: this.pdfService.totalPages() }, (_, i) => i + 1)
+  );
+
   private readonly onDocumentMouseUp = () => this.captureSelection();
   private resizeObserver: ResizeObserver | null = null;
+  private intersectionObserver: IntersectionObserver | null = null;
 
   constructor() {
+    // Single page rendering effect
     effect(() => {
       const page = this.pdfService.currentPage();
       const scale = this.pdfService.scale();
       const loaded = this.pdfService.isLoaded();
+      const mode = this.pdfService.scrollMode();
       const canvasEl = this.canvasRef();
       const textLayerEl = this.textLayerRef();
 
       this.zoomPercent.set(Math.round(scale * 100));
 
-      if (!loaded || !canvasEl || !textLayerEl) {
+      if (!loaded || mode !== 'single' || !canvasEl || !textLayerEl) {
         return;
       }
 
@@ -58,6 +68,36 @@ export class PdfViewerComponent implements OnInit, OnDestroy {
           this.pdfService.renderTextLayer(textLayer, result.viewport, result.textContent);
         }
       });
+    });
+
+    // Continuous scroll mode rendering effect
+    effect(() => {
+      const loaded = this.pdfService.isLoaded();
+      const scale = this.pdfService.scale();
+      const mode = this.pdfService.scrollMode();
+      const containers = this.pageContainers();
+
+      if (!loaded || mode !== 'continuous' || containers.length === 0) {
+        return;
+      }
+
+      // Render each page item
+      containers.forEach((containerRef) => {
+        const el = containerRef.nativeElement;
+        const pageNum = parseInt(el.dataset['pageNumber'] || '1', 10);
+        const canvas = el.querySelector('canvas') as HTMLCanvasElement;
+        const textLayer = el.querySelector('.textLayer') as HTMLDivElement;
+
+        if (canvas && textLayer) {
+          this.pdfService.renderPage({ pageNumber: pageNum, scale, canvas }).then((result) => {
+            if (result) {
+              this.pdfService.renderTextLayer(textLayer, result.viewport, result.textContent);
+            }
+          });
+        }
+      });
+
+      this.setupIntersectionObserver();
     });
   }
 
@@ -82,6 +122,39 @@ export class PdfViewerComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     document.removeEventListener('mouseup', this.onDocumentMouseUp);
     this.resizeObserver?.disconnect();
+    this.intersectionObserver?.disconnect();
+  }
+
+  private setupIntersectionObserver(): void {
+    if (this.intersectionObserver) {
+      this.intersectionObserver.disconnect();
+    }
+
+    const wrapper = this.wrapperRef()?.nativeElement;
+    if (!wrapper) return;
+
+    this.intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.intersectionRatio > 0.4) {
+            const pageNum = parseInt(
+              (entry.target as HTMLElement).dataset['pageNumber'] || '1',
+              10
+            );
+            this.pdfService.currentPage.set(pageNum);
+          }
+        });
+      },
+      {
+        root: wrapper,
+        threshold: [0.1, 0.4, 0.7]
+      }
+    );
+
+    setTimeout(() => {
+      const containers = this.pageContainers();
+      containers.forEach((c) => this.intersectionObserver?.observe(c.nativeElement));
+    }, 100);
   }
 
   @HostListener('window:keydown', ['$event'])
@@ -142,6 +215,18 @@ export class PdfViewerComponent implements OnInit, OnDestroy {
     const val = parseInt(input.value, 10);
     if (!isNaN(val)) {
       this.pdfService.goToPage(val);
+      this.scrollToPageInContinuousMode(val);
+    }
+  }
+
+  scrollToPageInContinuousMode(pageNum: number): void {
+    if (this.pdfService.scrollMode() === 'continuous') {
+      const target = this.pageContainers().find(
+        (c) => c.nativeElement.dataset['pageNumber'] === `${pageNum}`
+      );
+      if (target) {
+        target.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
   }
 

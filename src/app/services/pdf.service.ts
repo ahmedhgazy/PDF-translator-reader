@@ -30,6 +30,25 @@ export class PdfService {
   readonly errorMessage = signal<string | null>(null);
   readonly isFitToWidth = signal(false);
 
+  readonly scrollMode = signal<'continuous' | 'single'>(
+    (localStorage.getItem('pdf_reader_scroll_mode') as 'continuous' | 'single') || 'continuous'
+  );
+
+  readonly pageTheme = signal<'normal' | 'dark' | 'sepia'>(
+    (localStorage.getItem('pdf_reader_page_theme') as 'normal' | 'dark' | 'sepia') || 'normal'
+  );
+
+  toggleScrollMode(): void {
+    const next = this.scrollMode() === 'continuous' ? 'single' : 'continuous';
+    this.scrollMode.set(next);
+    localStorage.setItem('pdf_reader_scroll_mode', next);
+  }
+
+  setPageTheme(theme: 'normal' | 'dark' | 'sepia'): void {
+    this.pageTheme.set(theme);
+    localStorage.setItem('pdf_reader_page_theme', theme);
+  }
+
   // Stored natural page width (at scale=1) for fit-to-width calculation
   private naturalPageWidth = 0;
 

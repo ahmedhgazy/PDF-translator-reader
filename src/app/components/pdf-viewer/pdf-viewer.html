@@ -94,6 +94,40 @@
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
+
+        <!-- View Mode (Continuous vs Single) -->
+        <button
+          class="toolbar-btn"
+          [class.toolbar-btn--active]="pdfService.scrollMode() === 'continuous'"
+          (click)="pdfService.toggleScrollMode()"
+          title="Toggle Scroll Mode (Continuous vs Single Page)"
+          aria-label="Toggle Scroll Mode"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 3h8M4 8h8M4 13h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M2 5.5l1.5-1.5L5 5.5M2 10.5l1.5 1.5L5 10.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="btn-label-sm">{{ pdfService.scrollMode() === 'continuous' ? 'Continuous' : 'Single' }}</span>
+        </button>
+      </div>
+
+      <!-- Eye-Care Reading Themes -->
+      <div class="toolbar-group theme-selector-group">
+        <button
+          class="theme-chip"
+          [class.theme-chip--active]="pdfService.pageTheme() === 'normal'"
+          (click)="pdfService.setPageTheme('normal')"
+          title="Normal Paper"
+        >☀️ Normal</button>
+        <button
+          class="theme-chip"
+          [class.theme-chip--active]="pdfService.pageTheme() === 'dark'"
+          (click)="pdfService.setPageTheme('dark')"
+          title="Dark Page (Inverted)"
+        >🌙 Dark</button>
+        <button
+          class="theme-chip"
+          [class.theme-chip--active]="pdfService.pageTheme() === 'sepia'"
+          (click)="pdfService.setPageTheme('sepia')"
+          title="Sepia Warm Paper"
+        >📜 Sepia</button>
       </div>
 
       <!-- Filename -->
@@ -193,11 +227,23 @@
       </div>
     </div>
 
-    <div class="canvas-wrapper" #canvasWrapper>
-      <div class="page-container">
-        <canvas #pdfCanvas aria-label="PDF page content"></canvas>
-        <div #textLayer class="textLayer"></div>
-      </div>
+    <div class="canvas-wrapper" [class]="'canvas-wrapper page-theme--' + pdfService.pageTheme()" #canvasWrapper>
+      @if (pdfService.scrollMode() === 'continuous') {
+        <div class="continuous-pages-list">
+          @for (pageNum of pageNumbers(); track pageNum) {
+            <div class="page-container" #pageContainer [attr.data-page-number]="pageNum">
+              <canvas aria-label="PDF page content"></canvas>
+              <div class="textLayer"></div>
+              <div class="page-number-indicator">Page {{ pageNum }} of {{ pdfService.totalPages() }}</div>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="page-container" #pageContainer>
+          <canvas #pdfCanvas aria-label="PDF page content"></canvas>
+          <div #textLayer class="textLayer"></div>
+        </div>
+      }
     </div>
   }
 
