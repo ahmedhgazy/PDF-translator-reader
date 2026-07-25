@@ -184,8 +184,8 @@ export class TranslationPopupComponent implements OnInit, OnDestroy {
     this.localError.set(null);
     this.ttsService.stop();
     this.dragOffset.set({x: 0, y: 0});
-    
-    // Clear the browser's native text selection so the document 'mouseup' 
+
+    // Clear the browser's native text selection so the document 'mouseup'
     // listener doesn't immediately re-detect it and pop it back open.
     window.getSelection()?.removeAllRanges();
   }
