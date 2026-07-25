@@ -201,21 +201,52 @@ html, body {
 /* ================================================
    pdfjs-dist text layer overrides & selection UX
    ================================================ */
+/* ================================================
+   pdfjs-dist text layer overrides & selection UX
+   ================================================ */
+.page-container {
+  position: relative !important;
+  display: inline-block !important;
+  vertical-align: top !important;
+}
+
+.page-container canvas {
+  display: block !important;
+  vertical-align: top !important;
+}
+
 .textLayer {
-  z-index: 2 !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  overflow: hidden !important;
   opacity: 1 !important;
+  line-height: 1 !important;
+  text-size-adjust: none !important;
+  forced-color-adjust: none !important;
+  transform-origin: 0 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  z-index: 2 !important;
   mix-blend-mode: multiply;
-  line-height: 1;
   user-select: text !important;
   -webkit-user-select: text !important;
   pointer-events: auto !important;
 }
 
-.textLayer span {
+.textLayer span,
+.textLayer br {
+  position: absolute !important;
+  transform-origin: 0 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
   pointer-events: auto !important;
   cursor: text !important;
   user-select: text !important;
   -webkit-user-select: text !important;
+  white-space: pre !important;
 }
 
 .textLayer ::selection {

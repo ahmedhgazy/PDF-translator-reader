@@ -372,12 +372,14 @@
 .page-container {
   position: relative;
   display: inline-block;
+  vertical-align: top;
   z-index: 1;
   animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .page-container canvas {
   display: block;
+  vertical-align: top;
   background-color: #ffffff;
   border-radius: 8px;
   box-shadow: var(--shadow-page);
@@ -386,6 +388,11 @@
 }
 
 .page-container .textLayer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   pointer-events: auto;
   cursor: text;
 }
