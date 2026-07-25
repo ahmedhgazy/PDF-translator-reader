@@ -480,18 +480,20 @@
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
-/* Dark Page Mode - Midnight Obsidian Slate Theme with High-Contrast Typography */
+/* Dark Page Mode - Clean Obsidian Dark Sheet without inverted shadow artifacts */
 .canvas-wrapper.page-theme--dark {
-  background-color: #05060f !important;
+  background-color: #070913 !important;
+}
+
+.canvas-wrapper.page-theme--dark .page-container {
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.12);
 }
 
 .canvas-wrapper.page-theme--dark .page-container canvas {
-  filter: invert(0.94) hue-rotate(180deg) contrast(1.4) brightness(1.1);
+  filter: invert(0.95) hue-rotate(180deg) contrast(1.35) brightness(1.05);
+  box-shadow: none !important;
   border-radius: 12px;
-  box-shadow:
-    0 24px 70px rgba(0, 0, 0, 0.95),
-    0 0 0 1px rgba(99, 102, 241, 0.25),
-    0 0 35px rgba(99, 102, 241, 0.08);
 }
 
 .canvas-wrapper.page-theme--dark .page-number-indicator {
@@ -507,12 +509,15 @@
   background-color: #120e09 !important;
 }
 
+.canvas-wrapper.page-theme--sepia .page-container {
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(217, 119, 6, 0.2);
+}
+
 .canvas-wrapper.page-theme--sepia .page-container canvas {
   filter: sepia(0.48) contrast(1.08) brightness(0.96) hue-rotate(-15deg);
+  box-shadow: none !important;
   border-radius: 12px;
-  box-shadow:
-    0 20px 55px rgba(50, 30, 10, 0.6),
-    0 0 0 1px rgba(217, 119, 6, 0.25);
 }
 
 .canvas-wrapper.page-theme--sepia .page-number-indicator {
