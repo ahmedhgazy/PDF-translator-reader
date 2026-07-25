@@ -7,17 +7,6 @@ export interface TranslateOptions {
   target?: string;
 }
 
-// ─── MyMemory API response ────────────────────────────────────────────────────
-export interface MyMemoryResponse {
-  responseData: {
-    translatedText: string;
-    match: number;
-  };
-  responseStatus: number;
-  responseDetails: string;
-}
-
-// ─── Language options ─────────────────────────────────────────────────────────
 export interface LanguageOption {
   code: string;
   name: string;
@@ -45,44 +34,6 @@ export const SUPPORTED_LANGUAGES: LanguageOption[] = [
 })
 export class TranslationService {
   private readonly errorNotifier = inject(ErrorNotificationService);
-
-  // ─── API #1 (ACTIVE): MyMemory ─────────────────────────────────────────────
-  //
-  //  • Free, no API key required for anonymous use
-  //  • Limit: ~5 000 characters/day per IP (anonymous)
-  //  • Supports EN ↔ AR and 50+ language pairs
-  //  • Docs: https://mymemory.translated.net/doc/spec.php
-  //
-  private readonly myMemoryUrl = 'https://api.mymemory.translated.net/get';
-
-  // ─── API #2 (FALLBACK — uncomment to use): Lingva Translate ───────────────
-  //
-  //  • Completely free, no API key, open-source Google Translate frontend
-  //  • No daily limit (community-hosted)
-  //  • Supports EN ↔ AR and 100+ language pairs
-  //  • Docs: https://github.com/thedaviddelta/lingva-translate
-  //  • Endpoint: GET https://lingva.ml/api/v1/{source}/{target}/{encodedText}
-  //  • Response: { translation: "..." }
-  //
-  //  Usage — swap the translate() method body with this implementation:
-  //
-  // private readonly lingvaUrl = 'https://lingva.ml/api/v1';
-  //
-  // private async translateWithLingva(text: string, source: string, target: string): Promise<string> {
-  //   const url = `${this.lingvaUrl}/${source}/${target}/${encodeURIComponent(text)}`;
-  //   const response = await fetch(url);
-  //   if (!response.ok) {
-  //     throw new Error(`Translation failed (${response.status}): ${response.statusText}`);
-  //   }
-  //   const data = await response.json() as { translation: string };
-  //   return data.translation;
-  // }
-  //
-  // Note: Lingva uses 'auto' for source auto-detection.
-  // Note: If lingva.ml is down, mirror instances: https://lingva.garudalinux.org
-  //       Replace the base URL above with any working mirror.
-  // ──────────────────────────────────────────────────────────────────────────
-
   private readonly cache = new Map<string, string>();
 
   readonly isLoading = signal(false);
@@ -95,6 +46,51 @@ export class TranslationService {
     return `${text}|${source}|${target}`;
   }
 
+  /** Performs translation with automatic multi-provider fallback (Google GTX → MyMemory → Lingva). */
+  async translateText(text: string, source: string, target: string): Promise<string> {
+    const trimmed = text.trim();
+    if (!trimmed) return '';
+
+    const cacheKey = this.getCacheKey(trimmed, source, target);
+    if (this.cache.has(cacheKey)) {
+      return this.cache.get(cacheKey)!;
+    }
+
+    let result: string | null = null;
+
+    // Provider 1: Google GTX (Works worldwide, unblocked in Egypt & MENA)
+    try {
+      result = await this.fetchGoogleGtx(trimmed, source, target);
+    } catch {
+      // Ignore & try next provider
+    }
+
+    // Provider 2: MyMemory API
+    if (!result) {
+      try {
+        result = await this.fetchMyMemory(trimmed, source, target);
+      } catch {
+        // Ignore & try next provider
+      }
+    }
+
+    // Provider 3: Lingva Translate API
+    if (!result) {
+      try {
+        result = await this.fetchLingva(trimmed, source, target);
+      } catch {
+        // Ignore
+      }
+    }
+
+    if (!result) {
+      throw new Error('Translation service unavailable. Please check your internet connection.');
+    }
+
+    this.cache.set(cacheKey, result);
+    return result;
+  }
+
   async translate(options: TranslateOptions): Promise<void> {
     const target = options.target ?? this.targetLanguage();
     const source = options.source ?? this.sourceLanguage();
@@ -102,43 +98,12 @@ export class TranslationService {
 
     if (!text) return;
 
-    const cacheKey = this.getCacheKey(text, source, target);
     this.errorMessage.set(null);
-
-    if (this.cache.has(cacheKey)) {
-      this.translatedText.set(this.cache.get(cacheKey)!);
-      this.isLoading.set(false);
-      return;
-    }
-
     this.isLoading.set(true);
-    this.translatedText.set(null);
 
     try {
-      // ── Using MyMemory (API #1) ────────────────────────────────────────────
-      const langPair = `${source}|${target}`;
-      const url = `${this.myMemoryUrl}?q=${encodeURIComponent(text)}&langpair=${encodeURIComponent(langPair)}`;
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        throw new Error(`Translation failed (${response.status}): ${response.statusText}`);
-      }
-
-      const data = (await response.json()) as MyMemoryResponse;
-
-      if (data.responseStatus !== 200) {
-        // Status 429 = daily limit exceeded → switch to Lingva (API #2)
-        throw new Error(
-          data.responseStatus === 429
-            ? 'Daily limit reached. Switch to Lingva API (see comments in translation.service.ts).'
-            : (data.responseDetails || 'Translation service returned an error')
-        );
-      }
-
-      const translated = data.responseData.translatedText;
-      this.cache.set(cacheKey, translated);
+      const translated = await this.translateText(text, source, target);
       this.translatedText.set(translated);
-
     } catch (err) {
       this.errorNotifier.handleFetchError(err, 'translate text');
       const message = err instanceof Error ? err.message : 'Translation service unavailable';
@@ -146,6 +111,48 @@ export class TranslationService {
     } finally {
       this.isLoading.set(false);
     }
+  }
+
+  // ─── Provider Implementations ─────────────────────────────────────────────
+
+  private async fetchGoogleGtx(text: string, source: string, target: string): Promise<string> {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${encodeURIComponent(source)}&tl=${encodeURIComponent(target)}&dt=t&q=${encodeURIComponent(text)}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Google GTX error ${res.status}`);
+
+    const data = await res.json();
+    if (Array.isArray(data) && Array.isArray(data[0])) {
+      const sentences: string[] = data[0].map((item: any) => item[0]).filter(Boolean);
+      if (sentences.length > 0) {
+        return sentences.join('');
+      }
+    }
+    throw new Error('Invalid response format from Google GTX');
+  }
+
+  private async fetchMyMemory(text: string, source: string, target: string): Promise<string> {
+    const langPair = `${source}|${target}`;
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${encodeURIComponent(langPair)}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`MyMemory error ${res.status}`);
+
+    const data = await res.json();
+    if (data && data.responseData && data.responseStatus === 200) {
+      return data.responseData.translatedText;
+    }
+    throw new Error(data?.responseDetails || 'MyMemory failed');
+  }
+
+  private async fetchLingva(text: string, source: string, target: string): Promise<string> {
+    const url = `https://lingva.ml/api/v1/${encodeURIComponent(source)}/${encodeURIComponent(target)}/${encodeURIComponent(text)}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Lingva error ${res.status}`);
+
+    const data = await res.json();
+    if (data && data.translation) {
+      return data.translation;
+    }
+    throw new Error('Lingva failed');
   }
 
   swapLanguages(): void {
@@ -161,3 +168,4 @@ export class TranslationService {
     this.isLoading.set(false);
   }
 }
+

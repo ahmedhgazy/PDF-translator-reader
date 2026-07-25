@@ -190,28 +190,12 @@ export class TranslationPopupComponent implements OnInit, OnDestroy {
     try {
       const source = this.translationService.sourceLanguage();
       const target = this.translationService.targetLanguage();
-      const langPair = `${source}|${target}`;
-      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${encodeURIComponent(langPair)}`;
 
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`Error ${response.status}`);
-
-      const data = await response.json() as {
-        responseData: { translatedText: string };
-        responseStatus: number;
-        responseDetails: string;
-      };
-
-      if (data.responseStatus !== 200) {
-        throw new Error(data.responseDetails || 'Translation failed');
-      }
-
-      const translated = data.responseData.translatedText;
+      const translated = await this.translationService.translateText(text, source, target);
       this.localTranslation.set(translated);
 
-      // Also sync to sidebar TranslationService so sidebar stays updated
-      this.translationService.translate({ text, source, target });
-
+      // Sync to sidebar TranslationService signals so sidebar stays updated
+      this.translationService.translatedText.set(translated);
     } catch (err) {
       this.errorNotifier.handleFetchError(err, 'translate text');
       this.localError.set(err instanceof Error ? err.message : 'Translation failed');
